@@ -34,15 +34,15 @@ public class mergeFile {
 
         public void reduce(IntWritable key,Iterable<Text> docs,Context context) throws IOException, InterruptedException {
 
-            String temp="";
+            StringBuilder temp=new StringBuilder();
+            String temporaryString="";
 
             for(Text smallDocs:docs)
             {
-                temp += smallDocs.toString();
-                temp+='\n';
+                temp=new StringBuilder(temporaryString).append(smallDocs.toString());
             }
 
-            res.set(temp);
+            res.set(temp.toString());
 
             context.write(key,res);
 
