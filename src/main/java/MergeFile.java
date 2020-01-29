@@ -1,6 +1,6 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -12,39 +12,40 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
 
-public class mergeFile {
+public class MergeFile {
 
-    public static class myMapper extends Mapper<Object,Text, IntWritable,Text>{
+    public static class myMapper extends Mapper<Object,Text, NullWritable,Text>{
 
-        private final IntWritable inti=new IntWritable(1);
-        private Text key=new Text();
+        private NullWritable init = NullWritable.get();
+        private Text key = new Text();
 
         public void map(Object keyVal,Text val,Context context) throws IOException,InterruptedException{
 
             key.set(val.toString());
-            context.write(inti,key);
+            context.write(init,key);
 
         }
 
     }
 
-    public static class MyReducer extends Reducer<IntWritable,Text,IntWritable,Text>{
+    public static class MyReducer extends Reducer<NullWritable,Text,NullWritable,Text>{
 
-        private Text res=new Text();
+        private Text res = new Text();
+        NullWritable finKey = NullWritable.get();
 
-        public void reduce(IntWritable key,Iterable<Text> docs,Context context) throws IOException, InterruptedException {
+        public void reduce(NullWritable key,Iterable<Text> docs,Context context) throws IOException, InterruptedException {
 
-            StringBuilder temp=new StringBuilder();
-            String temporaryString="";
+            StringBuilder temp = new StringBuilder();
 
             for(Text smallDocs:docs)
             {
-                temp=new StringBuilder(temporaryString).append(smallDocs.toString());
+                temp = temp.append(smallDocs.toString());
+                temp = temp.append("\n");
             }
 
             res.set(temp.toString());
 
-            context.write(key,res);
+            context.write(finKey,res);
 
         }
 
@@ -54,11 +55,11 @@ public class mergeFile {
         Configuration conf=new Configuration();
         Job job=Job.getInstance(conf,"Merge Files");
 
-        job.setJarByClass(mergeFile.class);
+        job.setJarByClass(MergeFile.class);
         job.setMapperClass(myMapper.class);
-        job.setCombinerClass(MyReducer.class);
+        //job.setCombinerClass(MyReducer.class);
         job.setReducerClass(MyReducer.class);
-        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputKeyClass(NullWritable.class);
 
         job.setOutputValueClass(Text.class);
         job.setInputFormatClass(TextInputFormat.class);
